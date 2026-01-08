@@ -71,12 +71,14 @@ def process_file(pathname, options):
             if fn != pathname and os.path.exists(fn) and not options.force:
                 print("%s already exists." % fn, file=sys.stderr)
                 return
-        print(fn)
+
         f = open(fn, "w")
+        print(fn)
         print(p.message.as_string(unixfrom=False), file=f)
         f.close()
         if fn != pathname:
             os.unlink(pathname)
+
     except PatchException as e:
         print(e, file=sys.stderr)
 
