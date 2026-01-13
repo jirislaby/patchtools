@@ -79,15 +79,7 @@ def process_file(pathname, options):
         if fn != pathname:
             os.unlink(pathname)
 
-    except FileNotFoundError as e:
-        print(e, file=sys.stderr)
-        return 1
-
-    except PermissionError as e:
-        print(e, file=sys.stderr)
-        return 1
-
-    except PatchException as e:
+    except (FileNotFoundError, PermissionError, PatchException) as e:
         print(e, file=sys.stderr)
         return 1
 
