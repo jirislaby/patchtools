@@ -7,29 +7,36 @@ exportpatch - a tool to export patches from git with proper tags
 
 SYNOPSIS
 --------
-*exportpatch* [options] <commit> [commits..]
+*exportpatch* [options] <commit> [<commit> ...]
 
 DESCRIPTION
 -----------
-The *exportpatch* utility is a tool for exporting patches from git repositories
-with the tags that are expected for import into the SUSE kernel-source
-repository.
+The *exportpatch* utility is a tool for exporting one or more patches
+rom git repositories with the tags that are expected for import into
+the SUSE kernel-source repository.
 
-It is a requirement that the commit is contained in the git remote repository
+It is a requirement that each 'commit' is contained in the git remote repository
 as well as the local repository, though this can be overridden using the '-f'
 option.
 
-The behavior of exportpatch is controlled by the options below and the
-*patchtools.cfg(5)* configuration files.  If no configuration files are
+The behavior of *exportpatch* is controlled by the options below and the
+*patchtools.cfg(5)* configuration files. If no configuration files are
 available, *exportpatch* defaults to using the current directory as a
 git repository, the email address configured for use with git, and the
 user's real name from the system password database.
 
+All listed commits are exported as patch files, with processing halted if
+an error is detected.
+
 TAGS
 ----
+The following are the patch header tags that *exportpatch* can add
+to the exported patch file:
 
 *Git-commit*::
-All exported patches will contain a 'Git-commit' tag that identifies the commit that contains the patch.  It uses the full 40-character SHA1 hash.
+All exported patches will contain a 'Git-commit' tag that
+identifies the commit that contains the patch.
+It uses the full 40-character SHA1 hash.
 +
 When using the '--extract' or '--exclude' options documented below, this tag will
 also contain the text "(partial)" to identify it as incomplete.
@@ -39,7 +46,8 @@ When the repository is not a clone of an upstream "mainline" repository, this
 tag will contain the URL of the remote repository.
 
 *Patch-mainline*::
-If the repository is identified as a clone of the upstream "mainline" repository, this tag will contain the text of the oldest tag to contain this commit.
+If the repository is identified as a clone of the upstream "mainline" repository,
+this tag will contain the text of the oldest tag to contain this commit.
 +
 By default, the list of upstream mainline repositories is as follows, but can
 be extended using *patch.cfg(5)*.
@@ -47,98 +55,117 @@ be extended using *patch.cfg(5)*.
 git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
 git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
 +
-If the commit originated in a repository that is not an upstream mainline clone, it is assumed to have originated in a subsystem maintainer repository and the tag will contain "Queued in subsystem maintainer repository" instead of a version tag.  A 'Git-repo' tag will also be automatically added.
+If the commit originated in a repository that is not an upstream mainline clone,
+it is assumed to have originated in a subsystem maintainer repository and
+the tag will contain "Queued in subsystem maintainer repository" instead of a version tag.
+A 'Git-repo' tag will also be automatically added.
 
 *Acked-by*::
-If the patch doesn't already contained an 'Acked-by' or 'Signed-off-by' tag with the configured email address, an 'Acked-by' tag will be added to the patch unless the '--signed-off-by' option is used.
+If the patch doesn't already contain an 'Acked-by' or 'Signed-off-by' tag
+with the configured email address, an 'Acked-by' tag will be added to the
+patch unless the '--signed-off-by' option is used.
 
 *References*::
-A 'References' tag can optionally be added.  Only one tag will be exported.  It can contain multiple references.
+A 'References' tag can optionally be added. Only one tag will be exported.
+It can contain multiple references.
+The following are suggested values for the 'References' tag.
 
 Bugzilla:::
-A bugzilla identifier prefixed with 'bsc#' e.g. 'bsc#123450'.  Other bugzilla instances can be specified using a similar abbreviation.
+A bugzilla identifier prefixed with 'bsc#' e.g. 'bsc#123450'.
+Other bugzilla instances can be specified using a similar abbreviation.
 
-FATE:::
-The content should be a feature request ID prefixed with "FATE#"
+JIRA:::
+The content should be a JIRA feature request ID prefixed with 'jsc#',
+e.g. 'jsc#PED-348'.
 
 *Patch-filtered*::
-When the '--extract' or '--exclude' options are used, the patch will contain a 'Patch-filtered' tag indicating what filters were used when exporting the commit.
+When the '--extract' or '--exclude' options are used,
+the patch will contain a 'Patch-filtered' tag indicating
+what filters were used when exporting the commit.
 
 OPTIONS
 -------
 
 *--version*::
-show program's version number and exit
+Show program's version number and exit.
 
-*-h | --help*::
-show help message and exit
+*-h*, *--help*::
+Show help message and exit.
 
-*-w | --write*::
-Write the output to file(s) instead of stdout.  Default is to write to stdout.
+*-w*, *--write*::
+Write the output to file(s) instead of 'stdout'. Default is to write to 'stdout'.
 The filenames default to being a "safe" version of the commit's summary and
-can be modified using some of the options below.
+can be modified using some of the options below, which can add a numeric
+prefix (see '-n'), and/or a suffix (see '-s'). The filename length is limited
+to 64 characters, since subject lines can be arbitrarily long.
 +
-The filename(s) are output on stdout in the order the commits were specified.  This output can be captured to provide a series file for consumption by *quilt(1)*.
+If writing to 'stdout', the patch file(s) are output in the order the commits were specified.
+This output can be captured to provide a series file for consumption by *quilt(1)*.
 
-*-s | --suffix*::
-When used with --write, append .patch suffix to filenames.
+*-s*, *--suffix*::
+When used with '--write', append '.patch' suffix to filenames.
 
-*-n | --numeric*::
-When used with --write, prepend order numbers to filenames.  This will produce
-filenames prefixed with 0001-, 0002-, etc.
+*-n*, *--numeric*::
+When used with '--write', prepend order numbers to filenames. This will produce
+filenames prefixed with '0001-', '0002-', etc.
 
-*-N FIRST_NUMBER | --first-number=FIRST_NUMBER*::
-When used with --numeric, start the number at FIRST_NUMBER instead of 1.
+*-N FIRST_NUMBER*, *--first-number=FIRST_NUMBER*::
+When used with '--numeric', start the number at *FIRST_NUMBER* instead of 1.
 
-*-d DIR | --dir=DIR*::
+*-d DIR*, *--dir=DIR*::
 Instead of writing the patch(es) to the current directory, write them to
-DIR.
+*DIR*.
 
-*-f | --force*::
-By default, exportpatch will not overwrite existing files or export a commit
-that only exists in the local repository.  The latter behavior is a protection
+*-f*, *--force*::
+By default, *exportpatch* will not overwrite existing files or export a commit
+that only exists in the local repository. The latter behavior is a protection
 against adding patches to the kernel repository that look like they are
 upstream at a glance but are not.
 
-*-D | --debug*::
+*-D*, *--debug*::
 Enable more verbose debugging output.
 
-*-F REFERENCE | --reference=REFERENCE*::
-Add a References tag to the patch output using the specified reference.
+*-F REFERENCE*, *--reference=REFERENCE*::
+Add a 'References' tag to the patch output using the specified reference.
 +
 This option may be specified multiple times.
 
-*-x EXTRACT | --extract=EXTRACT*::
-Extract specific parts of the commit.  EXTRACT is a pathname.  If the path
-ends with /, it includes all files under that hierarchy.
+*-x EXTRACT*, *--extract=EXTRACT*::
+Extract specific parts of the commit. *EXTRACT* is a pathname. If the path
+ends with '/', it includes all files under that hierarchy.
 +
 This option may be specified multiple times.
 +
-Use of this option is documented in the patch output by appending "(partial)" to the Git-commit tag and adding one or more Patch-filtered tags that contain the paths extracted.
+Use of this option is documented in the patch output by appending "(partial)"
+to the Git-commit tag and adding one or more Patch-filtered tags that contain the paths extracted.
 
-*-X EXCLUDE | --exclude=EXCLUDE*::
-Exclude specific parts of the commit.  EXCLUDE is as pathname.  If the patch
-ends with /, it excludes all files under that hierarchy.
+*-X EXCLUDE*, *--exclude=EXCLUDE*::
+Exclude specific parts of the commit. *EXCLUDE* is as pathname. If the path
+ends with '/', it excludes all files under that hierarchy.
 +
 This option may be specified multiple times.
 +
-Use of this option is documented in the patch output by appending "(partial)" to the Git-commit tag and adding one or more Patch-filtered tags that contain the paths excluded.
+Use of this option is documented in the patch output by appending "(partial)"
+to the 'Git-commit' tag and adding one or more 'Patch-filtered'
+tags that contain the paths excluded.
 
-*-S | --signed-off-by*::
-By default, every patch exported has the user's "Acked-by" tag added to it.  This option uses the Signed-off-by tag instead of Acked-by.
+*-S*, *--signed-off-by*::
+By default, every patch exported has the user's 'Acked-by' tag added to it.
+This option uses the 'Signed-off-by' tag instead of 'Acked-by'.
 
 EXIT STATUS
 -----------
-*exportpatch* returns a zero exit status if it succeeds.  Non zero is returned
+*exportpatch* returns a zero exit status if it succeeds. Non-zero is returned
 in case of failure.
 
 AVAILABILITY
 ------------
-*exportpatch* is part of Patchtools.
-Please refer to the GitHub repository at https://github.com/jeffmahoney/jpt for more information.
+*exportpatch* is part of patchtools.
+Please refer to the GitHub repository
+at https://github.com/opensuse/patchtools for more information.
 
 SEE ALSO
 --------
-`fixpatch`(1)
-`patch.cfg(5)`
-`git`(1)
+fixpatch(1),
+patch.cfg(5),
+git(1)
